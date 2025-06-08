@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"calculator-otel/internal/service"
 	"context"
 	"encoding/json"
 	"io"
@@ -12,6 +11,8 @@ import (
 	"os"
 	"os/signal"
 	"time"
+
+	"calculator-otel/internal/service"
 )
 
 const (

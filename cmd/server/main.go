@@ -9,8 +9,17 @@ import (
 	"os/signal"
 	"time"
 
+	"go.opentelemetry.io/contrib/bridges/otelslog"
+
 	"calculator-otel/internal/app"
+	"calculator-otel/internal/observability"
 	"calculator-otel/internal/service"
+)
+
+const (
+	appName        = "calculator-otel"
+	appVersion     = "1.0.0"
+	appEnvironment = "development"
 )
 
 func main() {
@@ -18,7 +27,20 @@ func main() {
 	signCtx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	otelShutdown, err := observability.InitOpenTelemetry(
+		ctx,
+		appName,
+		appVersion,
+		appEnvironment,
+	)
+	if err != nil {
+		slog.ErrorContext(ctx, "failed to initialize OpenTelemetry", "error", err)
+	}
+
+	defer otelShutdown(ctx)
+
+	otelSlogHandler := otelslog.NewHandler(appName)
+	logger := slog.New(otelSlogHandler)
 
 	logger.InfoContext(ctx, "starting calculator server")
 	defer logger.InfoContext(ctx, "shutting down calculator server")

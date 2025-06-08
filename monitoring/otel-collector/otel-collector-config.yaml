@@ -1,0 +1,19 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+
+processors:
+  batch: # Batching for efficiency
+    timeout: 1s
+
+exporters:
+  zipkin:
+    endpoint: "http://zipkin:9411/api/v2/spans" # Zipkin exporter configuration
+
+service:
+  pipelines:
+    traces: # Also configure traces pipeline
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [zipkin] # Export traces to Zipkin
