@@ -1,0 +1,9 @@
+FROM gcr.io/distroless/static-debian11
+
+WORKDIR /app
+
+COPY ./bin/server /app/server
+
+EXPOSE 8080
+
+CMD ["/app/server"]
