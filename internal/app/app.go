@@ -6,17 +6,21 @@ import (
 
 	"calculator-otel/internal/logger"
 	"calculator-otel/internal/service"
+
+	"go.opentelemetry.io/otel/trace"
 )
 
 type app struct {
 	logger  logger.Logger
 	service *service.Service
+	tracer  trace.Tracer
 }
 
-func New(logger logger.Logger, service *service.Service) *app {
+func New(logger logger.Logger, service *service.Service, tracer trace.Tracer) *app {
 	return &app{
 		logger:  logger,
 		service: service,
+		tracer:  tracer,
 	}
 }
 
@@ -37,6 +41,9 @@ func (a *app) pingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *app) CalculateHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, span := a.tracer.Start(r.Context(), "CalculateHandler")
+	defer span.End()
+
 	req := &Request{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -46,14 +53,14 @@ func (a *app) CalculateHandler(w http.ResponseWriter, r *http.Request) {
 	var result int
 	switch req.Operation {
 	case service.OperandAdd:
-		result = a.service.Add(r.Context(), req.Input1, req.Input2)
+		result = a.service.Add(ctx, req.Input1, req.Input2)
 	case service.OperandSubtract:
-		result = a.service.Subtract(r.Context(), req.Input1, req.Input2)
+		result = a.service.Subtract(ctx, req.Input1, req.Input2)
 	case service.OperandMultiply:
-		result = a.service.Multiply(r.Context(), req.Input1, req.Input2)
+		result = a.service.Multiply(ctx, req.Input1, req.Input2)
 	case service.OperandDivide:
 		var err error
-		result, err = a.service.Divide(r.Context(), req.Input1, req.Input2)
+		result, err = a.service.Divide(ctx, req.Input1, req.Input2)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -66,10 +73,10 @@ func (a *app) CalculateHandler(w http.ResponseWriter, r *http.Request) {
 		Result: result,
 	}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		a.logger.ErrorContext(r.Context(), "failed to encode response", "error", err)
+		a.logger.ErrorContext(ctx, "failed to encode response", "error", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	a.logger.InfoContext(r.Context(), "calculation successful", "operation", req.Operation, "result", result)
+	a.logger.InfoContext(ctx, "calculation successful", "operation", req.Operation, "result", result)
 }

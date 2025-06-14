@@ -32,7 +32,7 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	client := http.Client{
-		Timeout: time.Second,
+		Timeout: 2 * time.Second,
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint+"/ping", nil)
@@ -95,7 +95,9 @@ func main() {
 					}
 					logger.Info("Calculation successful", "threadID", threadID, "status", resp.Status)
 
-					time.Sleep(time.Duration(rand.Intn(2_000)) * time.Millisecond) // Random sleep between 0 and 2 seconds
+					time.Sleep(
+						time.Duration(rand.Intn(2_000)) * time.Millisecond,
+					) // Random sleep between 0 and 2 seconds
 				}
 			}
 		}(i)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/contrib/bridges/otelslog"
+	"go.opentelemetry.io/otel"
 
 	"calculator-otel/internal/app"
 	"calculator-otel/internal/observability"
@@ -47,7 +48,9 @@ func main() {
 
 	service := service.New(logger)
 
-	app := app.New(logger, service)
+	tracer := otel.Tracer(appName)
+
+	app := app.New(logger, service, tracer)
 	mux := app.InitializeRoutes()
 
 	server := &http.Server{

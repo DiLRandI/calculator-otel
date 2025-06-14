@@ -2,6 +2,7 @@ receivers:
   otlp:
     protocols:
       grpc:
+        endpoint: 0.0.0.0:4317
 
 processors:
   batch: # Batching for efficiency
@@ -13,7 +14,6 @@ exporters:
 
 service:
   pipelines:
-    traces: # Also configure traces pipeline
+    traces:
       receivers: [otlp]
-      processors: [batch]
-      exporters: [zipkin] # Export traces to Zipkin
+      exporters: [zipkin]

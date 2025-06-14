@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   calculator-server:
@@ -21,10 +21,10 @@ services:
     volumes:
       - ./monitoring/otel-collector/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "4317:4317"   # OTLP gRPC
-      - "4318:4318"   # OTLP HTTP
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
       - "55681:55681" # OpenCensus
-      - "8888:8888"   # Metrics
+      - "8888:8888" # Metrics
     depends_on:
       - zipkin
 
@@ -33,3 +33,15 @@ services:
     container_name: zipkin
     ports:
       - "9412:9411"
+
+  valkey:
+    image: valkey/valkey:latest
+    container_name: valkey
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey-data:/data
+    command: ["--save", "60", "1"]
+
+volumes:
+  valkey-data:
