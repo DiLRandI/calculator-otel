@@ -9,10 +9,13 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/valkey-io/valkey-go"
+	"github.com/valkey-io/valkey-go/valkeyotel"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
 
 	"calculator-otel/internal/app"
+	"calculator-otel/internal/cache"
 	"calculator-otel/internal/observability"
 	"calculator-otel/internal/service"
 )
@@ -46,7 +49,15 @@ func main() {
 	logger.InfoContext(ctx, "starting calculator server")
 	defer logger.InfoContext(ctx, "shutting down calculator server")
 
-	service := service.New(logger)
+	valkyClient, err := valkeyotel.NewClient(valkey.ClientOption{InitAddress: []string{"valkey:6379"}})
+	if err != nil {
+		logger.ErrorContext(ctx, "failed to create Valkey client", "error", err)
+		return
+	}
+
+	cache := cache.New[int](valkyClient)
+
+	service := service.New(logger, cache)
 
 	tracer := otel.Tracer(appName)
 

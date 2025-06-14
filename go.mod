@@ -4,6 +4,7 @@ go 1.24.3
 
 require (
 	github.com/valkey-io/valkey-go v1.0.61
+	github.com/valkey-io/valkey-go/valkeyotel v1.0.61
 	go.opentelemetry.io/contrib/bridges/otelslog v0.11.0
 	go.opentelemetry.io/otel v1.36.0
 	go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc v0.12.2

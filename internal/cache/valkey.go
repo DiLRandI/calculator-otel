@@ -25,6 +25,7 @@ func (c *valkeyCache[T]) Set(ctx context.Context, key string, value T) error {
 
 	return nil
 }
+
 func (c *valkeyCache[T]) SetWithTTL(ctx context.Context, key string, value T, ttl time.Duration) error {
 	err := c.client.Do(ctx, c.client.B().Set().Key(key).Value(valueToString(value)).Ex(ttl).Build()).Error()
 	if err != nil {
@@ -33,6 +34,7 @@ func (c *valkeyCache[T]) SetWithTTL(ctx context.Context, key string, value T, tt
 
 	return nil
 }
+
 func (c *valkeyCache[T]) Get(ctx context.Context, key string) (T, error) {
 	var value T
 	result, err := c.client.Do(ctx, c.client.B().Get().Key(key).Build()).AsBytes()
@@ -50,10 +52,6 @@ func (c *valkeyCache[T]) Get(ctx context.Context, key string) (T, error) {
 	}
 
 	return value, nil
-}
-func (c *valkeyCache[T]) Delete(ctx context.Context, key string) error {
-	// Implement the logic to delete the value from the cache
-	return nil
 }
 
 func valueToString[T any](value T) string {
