@@ -10,13 +10,18 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"time"
 
 	"calculator-otel/internal/service"
+
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
-	endpoint = "http://localhost:8080"
+	endpoint = "http://localhost"
 )
 
 type CalculationRequest struct {
@@ -28,6 +33,7 @@ type CalculationRequest struct {
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
+	tracer := otel.Tracer("calculator-otel/client")
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
@@ -40,6 +46,9 @@ func main() {
 		logger.Error("Failed to create ping request", "error", err)
 		return
 	}
+
+	req.Header.Set("User-Agent", "CalculatorClient/1.0")
+
 	resp, err := client.Do(req)
 	if err != nil {
 		logger.Error("Failed to send ping request", "error", err)
@@ -62,9 +71,14 @@ func main() {
 					logger.Info("Thread exiting", "threadID", threadID)
 					return
 				default:
+					spanCtx, span := tracer.Start(ctx, "sendCalculationRequest", trace.WithAttributes(
+						attribute.String("threadID", strconv.Itoa(threadID)),
+					), trace.WithSpanKind(trace.SpanKindClient))
+					defer span.End()
+
 					reqBody := CalculationRequest{
-						Input1:    rand.Int(),
-						Input2:    rand.Int(),
+						Input1:    rand.Intn(100),
+						Input2:    rand.Intn(100),
 						Operation: operators[rand.Intn(len(operators))],
 					}
 
@@ -74,12 +88,13 @@ func main() {
 						continue
 					}
 
-					req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint+"/calculate", nil)
+					req, err := http.NewRequestWithContext(spanCtx, http.MethodPost, endpoint+"/calculate", nil)
 					if err != nil {
 						logger.Error("Failed to create request", "error", err)
 						continue
 					}
 					req.Header.Set("Content-Type", "application/json")
+					req.Header.Set("User-Agent", "CalculatorClient/1.0")
 					req.Body = io.NopCloser(bytes.NewReader(body))
 
 					resp, err := client.Do(req)

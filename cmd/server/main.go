@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log/slog"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +12,7 @@ import (
 	"github.com/valkey-io/valkey-go/valkeyotel"
 	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/log/global"
 
 	"calculator-otel/internal/app"
 	"calculator-otel/internal/cache"
@@ -43,7 +43,7 @@ func main() {
 
 	defer otelShutdown(ctx)
 
-	otelSlogHandler := otelslog.NewHandler(appName)
+	otelSlogHandler := otelslog.NewHandler(appName, otelslog.WithLoggerProvider(global.GetLoggerProvider()))
 	logger := slog.New(otelSlogHandler)
 
 	logger.InfoContext(ctx, "starting calculator server")
@@ -67,9 +67,6 @@ func main() {
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: mux,
-		BaseContext: func(net.Listener) context.Context {
-			return signCtx
-		},
 	}
 
 	go func() {

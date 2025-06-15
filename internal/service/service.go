@@ -49,7 +49,6 @@ func (s *Service) Add(ctx context.Context, a, b int) int {
 	err = s.cache.Set(ctx, createCacheKey(a, b, "add"), result)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "failed to set cache value", "error", err, "key", createCacheKey(a, b, "add"))
-		return result // Return the result even if caching fails
 	}
 
 	return result
@@ -81,7 +80,6 @@ func (s *Service) Subtract(ctx context.Context, a, b int) int {
 	err = s.cache.Set(ctx, createCacheKey(a, b, "subtract"), result)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "failed to set cache value", "error", err, "key", createCacheKey(a, b, "subtract"))
-		return result // Return the result even if caching fails
 	}
 
 	return result
@@ -113,7 +111,6 @@ func (s *Service) Multiply(ctx context.Context, a, b int) int {
 	err = s.cache.Set(ctx, createCacheKey(a, b, "multiply"), result)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "failed to set cache value", "error", err, "key", createCacheKey(a, b, "multiply"))
-		return result // Return the result even if caching fails
 	}
 
 	return result
@@ -146,7 +143,6 @@ func (s *Service) Divide(ctx context.Context, a, b int) (int, error) {
 	err = s.cache.Set(ctx, createCacheKey(a, b, "divide"), result)
 	if err != nil {
 		s.logger.ErrorContext(ctx, "failed to set cache value", "error", err, "key", createCacheKey(a, b, "divide"))
-		return result, nil
 	}
 
 	return result, nil

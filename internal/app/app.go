@@ -41,7 +41,7 @@ func (a *app) pingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *app) CalculateHandler(w http.ResponseWriter, r *http.Request) {
-	ctx, span := a.tracer.Start(r.Context(), "CalculateHandler")
+	ctx, span := a.tracer.Start(r.Context(), "CalculateHandler", trace.WithLinks(trace.LinkFromContext(r.Context())))
 	defer span.End()
 
 	req := &Request{}

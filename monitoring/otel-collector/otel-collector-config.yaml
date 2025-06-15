@@ -6,14 +6,23 @@ receivers:
 
 processors:
   batch: # Batching for efficiency
-    timeout: 1s
+    timeout: 5s
 
 exporters:
-  zipkin:
-    endpoint: "http://zipkin:9411/api/v2/spans" # Zipkin exporter configuration
+  # zipkin:
+  #   endpoint: "http://zipkin:9411/api/v2/spans" # Zipkin exporter configuration
+  otlp:
+    endpoint: "jaeger:4317" # Jaeger gRPC collector endpoint
+    tls:
+      insecure: true # Disable TLS for local development
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
-      exporters: [zipkin]
+      processors: [batch]
+      exporters: [otlp]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
