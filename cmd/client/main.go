@@ -21,7 +21,8 @@ import (
 )
 
 const (
-	endpoint = "http://localhost"
+	endpoint  = "http://localhost"
+	maxNumber = 10000
 )
 
 type CalculationRequest struct {
@@ -38,7 +39,11 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	client := http.Client{
-		Timeout: 2 * time.Second,
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			DisableKeepAlives:     true,
+			ResponseHeaderTimeout: 5 * time.Second,
+		},
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint+"/ping", nil)
@@ -77,8 +82,8 @@ func main() {
 					defer span.End()
 
 					reqBody := CalculationRequest{
-						Input1:    rand.Intn(100),
-						Input2:    rand.Intn(100),
+						Input1:    rand.Intn(maxNumber),
+						Input2:    rand.Intn(maxNumber),
 						Operation: operators[rand.Intn(len(operators))],
 					}
 
