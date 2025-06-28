@@ -81,11 +81,11 @@ services:
       - calculator-server-3
     restart: unless-stopped
 
-  # zipkin:
-  #   image: openzipkin/zipkin:latest
-  #   container_name: zipkin
-  #   ports:
-  #     - "9412:9411"
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    ports:
+      - "9412:9411"
 
   jaeger:
     image: jaegertracing/all-in-one:latest
