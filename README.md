@@ -413,6 +413,37 @@ make logs           # Follow service logs
    - Verify Valkey status: `docker compose ps valkey`
    - Check cache integration in application logs
 
+### OpenTelemetry Metrics Upload Error
+
+If you see an error like:
+
+```
+failed to upload metrics: rpc error: code = Unimplemented desc = unknown service opentelemetry.proto.collector.metrics.v1.MetricsService
+```
+
+This means the OpenTelemetry Collector endpoint does not support the OTLP metrics gRPC service. To resolve:
+
+1. **Collector Version**: Ensure you are running a recent OpenTelemetry Collector (v0.60.0+ recommended).
+2. **Collector Config**: Make sure your `otel-collector-config.yaml` includes:
+
+   ```yaml
+   receivers:
+     otlp:
+       protocols:
+         grpc:
+         http:
+   service:
+     pipelines:
+       metrics:
+         receivers: [otlp]
+         exporters: [prometheus]
+   ```
+
+3. **Restart the Collector** after any config changes.
+4. **Check Application Endpoint**: Ensure your app is sending metrics to the correct collector endpoint (default: `localhost:4317`).
+
+If you are using the provided configuration, metrics should be enabled by default. If you still encounter issues, check the collector logs for more details.
+
 ### Debugging
 
 - **Application logs**: `docker compose logs calculator-server-1`
