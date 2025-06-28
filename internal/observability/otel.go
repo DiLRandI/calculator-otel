@@ -54,8 +54,8 @@ func InitOpenTelemetry(
 	}
 
 	traceProvider := trace.NewTracerProvider(
-		trace.WithBatcher(traceExporter),
 		trace.WithResource(resource),
+		trace.WithBatcher(traceExporter),
 	)
 
 	otel.SetTracerProvider(traceProvider)
@@ -65,7 +65,7 @@ func InitOpenTelemetry(
 		return nil, err
 	}
 
-	reader := metric.NewPeriodicReader(metricExporter, metric.WithInterval(30*time.Second))
+	reader := metric.NewPeriodicReader(metricExporter, metric.WithInterval(10*time.Second))
 
 	mp := metric.NewMeterProvider(
 		metric.WithResource(resource),
