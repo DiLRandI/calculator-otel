@@ -18,6 +18,7 @@ import (
 	"calculator-otel/internal/cache"
 	"calculator-otel/internal/observability"
 	"calculator-otel/internal/service"
+	"calculator-otel/internal/storage"
 )
 
 const (
@@ -49,6 +50,23 @@ func main() {
 	logger.InfoContext(ctx, "starting calculator server")
 	defer logger.InfoContext(ctx, "shutting down calculator server")
 
+	db, closeFn, err := storage.NewPostgresDb(&storage.Config{
+		Username: "postgres",
+		Password: "password",
+		Host:     "postgres",
+		Port:     5432,
+		Database: "calculator",
+	})
+	if err != nil {
+		logger.ErrorContext(ctx, "failed to connect to PostgreSQL database", "error", err)
+		return
+	}
+	defer func() {
+		if err := closeFn(); err != nil {
+			logger.ErrorContext(ctx, "failed to close PostgreSQL database connection", "error", err)
+		}
+	}()
+
 	valkyClient, err := valkeyotel.NewClient(valkey.ClientOption{InitAddress: []string{"valkey:6379"}})
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create Valkey client", "error", err)
@@ -57,7 +75,7 @@ func main() {
 
 	cache := cache.New[int](valkyClient)
 
-	service := service.New(logger, cache)
+	service := service.New(logger, cache, db)
 
 	tracer := otel.Tracer(appName)
 

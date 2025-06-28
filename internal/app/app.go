@@ -32,6 +32,7 @@ func (a *app) InitializeRoutes() *http.ServeMux {
 	mux.Handle("POST /ping", otelhttp.NewHandler(http.HandlerFunc(a.pingHandler), "PingHandler"))
 
 	mux.Handle("POST /calculate", otelhttp.NewHandler(http.HandlerFunc(a.CalculateHandler), "CalculateHandler"))
+	mux.Handle("GET /history", otelhttp.NewHandler(http.HandlerFunc(a.HistoryHandler), "HistoryHandler"))
 
 	return mux
 }
@@ -42,9 +43,6 @@ func (a *app) pingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *app) CalculateHandler(w http.ResponseWriter, r *http.Request) {
-	// ctx, span := a.tracer.Start(r.Context(), "CalculateHandler", trace.WithLinks(trace.LinkFromContext(r.Context())))
-	// defer span.End()
-
 	ctx := r.Context()
 
 	req := &Request{}
@@ -90,4 +88,28 @@ func (a *app) CalculateHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	a.logger.InfoContext(ctx, "calculation successful", "operation", req.Operation, "result", result)
+}
+
+func (a *app) HistoryHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	history, err := a.service.GetHistory(ctx)
+	if err != nil {
+		a.logger.ErrorContext(ctx, "failed to get history", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if len(history) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	if err := json.NewEncoder(w).Encode(history); err != nil {
+		a.logger.ErrorContext(ctx, "failed to encode history response", "error", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
