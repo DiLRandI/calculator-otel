@@ -10,19 +10,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"time"
 
 	"calculator-otel/internal/service"
-
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
 	endpoint  = "http://localhost"
-	maxNumber = 10000
+	maxNumber = 100_000_000
 )
 
 type CalculationRequest struct {
@@ -34,16 +29,11 @@ type CalculationRequest struct {
 func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer cancel()
-	tracer := otel.Tracer("calculator-otel/client")
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	client := http.Client{
-		Timeout: 5 * time.Second,
-		Transport: &http.Transport{
-			DisableKeepAlives:     true,
-			ResponseHeaderTimeout: 5 * time.Second,
-		},
+		Timeout: 30 * time.Second,
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint+"/ping", nil)
@@ -76,11 +66,6 @@ func main() {
 					logger.Info("Thread exiting", "threadID", threadID)
 					return
 				default:
-					spanCtx, span := tracer.Start(ctx, "sendCalculationRequest", trace.WithAttributes(
-						attribute.String("threadID", strconv.Itoa(threadID)),
-					), trace.WithSpanKind(trace.SpanKindClient))
-					defer span.End()
-
 					reqBody := CalculationRequest{
 						Input1:    rand.Intn(maxNumber),
 						Input2:    rand.Intn(maxNumber),
@@ -93,7 +78,7 @@ func main() {
 						continue
 					}
 
-					req, err := http.NewRequestWithContext(spanCtx, http.MethodPost, endpoint+"/calculate", nil)
+					req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint+"/calculate", nil)
 					if err != nil {
 						logger.Error("Failed to create request", "error", err)
 						continue
